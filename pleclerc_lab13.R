@@ -1,44 +1,11 @@
-\documentclass{article}
-\usepackage[margin=1.0in]{geometry} % To set margins
-\usepackage{amsmath}  % This allows me to use the align functionality.
-                      % If you find yourself trying to replicate
-                      % something you found online, ensure you're
-                      % loading the necessary packages!
-\usepackage{amsfonts} % Math font
-\usepackage{fancyvrb}
-\usepackage{hyperref} % For including hyperlinks
-\usepackage[shortlabels]{enumitem}% For enumerated lists with labels specified
-                                  % We had to run tlmgr_install("enumitem") in R
-\usepackage{float}    % For telling R where to put a table/figure
-\usepackage{natbib}        %For the bibliography
-\bibliographystyle{apalike}%For the bibliography
 
-\begin{document}
-<<echo=F, message=F, warning=F>>=
+##################################
+##### Task 1 #####################
+##################################
+
+##### a) #########################
+
 library(tidyverse)
-@
-
-\begin{enumerate}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Question 1
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\item When conducting the work of Lab 11, we conducted the test that uses the
-Central Limit Theorem even though the sample size was ``small" (i.e., $n<30$).
-It turns out, that how ``far off" the $t$-test is can be computed using
-a first-order Edgeworth approximation for the error. Below, we will do this 
-for the the further observations.
-\begin{enumerate}
-  \item \cite{Boos00} note that 
-  \begin{align*}
-    P(T \leq t) \approx F_Z(t) + \underbrace{\frac{\text{skew}}{\sqrt{n}} \frac{(2t^2+1)}{6} f_Z(t)}_{\textrm{error}},
-  \end{align*}
-  where $f_Z(\cdot)$ and $F_Z(\cdot)$ are the Gaussian PDF and CDF and skew is the
-  skewness of the data. What is the potential error in the computation of the 
-  $p$-value when testing $H_0: \mu_X=0; H_a: \mu_X<0$ using the zebra finch further data? 
-  <<size="scriptsize", warning=F, message=F>>=
-  library(tidyverse)
 library(e1071)
 set.seed(5656)
 zf <- read_csv("zebrafinches.csv")
@@ -49,14 +16,8 @@ skew.sqn <- skew/sqrt(n)
 sd.zf <- sd(zf$further)
 t <- mean(zf$further) / (sd.zf / sqrt(n))
 (error <- (skew.sqn)*((2*t^2+1)/6)*dnorm(t))
-  @
-Therefore the potential error is approximately $-1.226\times 10^{-13}$.
 
-  \item Compute the error for $t$ statistics from -10 to 10 and plot a line
-  that shows the error across $t$. Continue to use the skewness and 
-  the sample size for the zebra finch further data.
-
-  <<size="scriptsize", warning=F, message=F>>=
+##### b) #########################
 
 t.vals <- seq(-10, 10, 0.1)
 errors <- tibble(error = numeric(length(t.vals)))
@@ -68,44 +29,19 @@ for(i in 1:length(t.vals)){
 plot(t.vals, errors$error, type = "l", 
      main = "Error for t statistics", 
      ylab = "Error", xlab = "t")
-  @
 
-  \item Suppose we wanted to have a tail probability within 10\% of the desired
-  $\alpha=0.05$. Recall we did a left-tailed test using the further data.
-  How large of a sample size would we need? That is, we need
-  to solve the error formula equal to 10\% of the desired left-tail probability:
-  \[0.10 \alpha  \stackrel{set}{=} \underbrace{\frac{\text{skew}}{\sqrt{n}} \frac{(2t^2+1)}{6} f_Z(t)}_{\textrm{error}},\]
-  which yields
-  \[ n = \left(\frac{\text{skew}}{6(0.10\alpha)} (2t^2 + 1) f_Z(t)\right)^2.\]
-  
-  <<size="scriptsize", warning=F, message=F>>=
+##### c) #########################
+
 alpha <- 0.05
 t.crit <- qnorm(alpha)
 (n.star <- ((skew/(6*0.10*alpha))*(2*t.crit^2+1)*dnorm(t.crit))^2)
-  @
-Therefore we would need a sample size of at least 521.
 
-\end{enumerate}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Question 3
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\item Complete the following steps to revisit the analyses from lab 11 using the
-bootstrap procedure.
-\begin{enumerate}
-\item Now, consider the zebra finch data. We do not know the generating distributions
-for the closer, further, and difference data, so perform resampling to approximate the 
-sampling distribution of the $T$ statistic:
-  \[T = \frac{\bar{x}_r - 0}{s/\sqrt{n}},\]
-  where $\bar{x}_r$ is the mean computed on the r$^{th}$ resample and $s$ is the
-  sample standard deviation from the original samples. At the end, create an
-  object called \texttt{resamples.null.closer}, for example, and store the 
-  resamples shifted to ensure they are consistent with the null hypotheses at the average 
-  (i.e., here ensure the shifted resamples are 0 on average, corresponding
-  to $t=0$, for each case). 
-  
-  <<size="scriptsize", warning=F, message=F>>=
+##################################
+##### Task 2 #####################
+##################################
+
+##### a) #########################
+
 R <- 10000
 resamples <- tibble(xbars = rep(NA, R))
 
@@ -144,12 +80,9 @@ r.xbar.diff <- resamples$xbars
 
 t.diff <- r.xbar.diff / (sd.zf / sqrt(n))
 resamples.null.diff <- t.diff - mean(t.diff)
-  @
-  
-  \item Compute the bootstrap $p$-value for each test using the shifted resamples. 
-  How do these compare to the $t$-test $p$-values?
-  
-  <<size="scriptsize", warning=F, message=F>>=
+
+##### b) #########################
+
 t.test.further <- t.test(zf$further, mu = 0, alternative = "less")
 (p.t.further <- t.test.further$p.value)
 (p.boot.further <- mean(resamples.null.further <= t.test.further$statistic))
@@ -162,22 +95,16 @@ t.test.diff <- t.test(zf$diff, mu = 0, alternative = "two.sided")
 (p.t.diff <- t.test.diff$p.value)
 (p.boot.diff <- mean(resamples.null.diff <= -t.test.diff$statistic) +
   mean(resamples.null.diff >= t.test.diff$statistic))
-  @
-In each case, the p-values are all very close to zero. 
-    \item What is the 5$^{th}$ percentile of the shifted resamples under the null hypothesis? 
-  Note this value approximates $t_{0.05, n-1}$. Compare these values in each case.
-  
-  <<size="scriptsize", warning=F, message=F>>=
+
+##### c) #########################
+
 (quantile(resamples.null.further, alpha))
 (quantile(resamples.null.closer, alpha))
 (quantile(resamples.null.diff, alpha))
 (qt(alpha,n-1))
-  @
 
-  \item Compute the bootstrap confidence intervals using the resamples. How do these 
-  compare to the $t$-test confidence intervals?
-  
-  <<size="scriptsize", warning=F, message=F>>=
+##### d) #########################
+
 t.test.further <- t.test(zf$further, mu = 0, alternative = "two.sided")
 (t.test.further$conf.int)
 (quantile(r.xbar.further, c(0.025, 0.975)))
@@ -188,22 +115,13 @@ t.test.closer <- t.test(zf$closer, mu = 0, alternative = "two.sided")
 
 (t.test.diff$conf.int)
 (quantile(r.xbar.diff, c(0.025, 0.975)))
-  @
-Overall, the bootstrap confidence intervals are very similar to the $t$-test confidence intervals.
 
-\end{enumerate}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Question 4
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\item Complete the following steps to revisit the analyses from lab 11 using the
-randomization procedure.
-\begin{enumerate}
-\item Now, consider the zebra finch data. We do not know the generating distributions
-for the closer, further, and difference data, so perform the randomization procedure
+##################################
+##### Task 3 #####################
+##################################
 
-<<size="scriptsize", warning=F, message=F>>=
+##### a) #########################
+
 R <- 10000
 rand.further <- tibble(xbars = rep(NA, R))
 rand.closer <- tibble(xbars = rep(NA, R))
@@ -239,24 +157,16 @@ rand.closer <- rand.closer |>
 rand.diff <- rand.diff |>
   mutate(xbars = xbars + mean(zf$diff)) # shifting back
 
-  @
+##### b) #########################
 
-  \item Compute the randomization test $p$-value for each test.
-  
-  <<size="scriptsize", warning=F, message=F>>=
 (p.rand.further <- mean(rand.further$xbars - mean(zf$further) <= mean(zf$further)))
 
 (p.rand.closer <- mean(rand.closer$xbars - mean(zf$closer) >= mean(zf$closer)))
 
 (p.rand.diff <- mean(abs(rand.diff$xbars) - mean(zf$diff) >= abs(mean(zf$diff))))
-  @
-  
-  \item Compute the randomization confidence interval by iterating over values of $\mu_0$.\\
-  \textbf{Hint:} You can ``search" for the lower bound from $Q_1$ and subtracting by 0.0001, 
-  and the upper bound using $Q_3$ and increasing by 0.0001. You will continue until you find 
-  the first value for which the two-sided $p$-value is greater than or equal to 0.05.
-  
-  <<size="scriptsize", warning=F, message=F>>=
+
+##### c) #########################
+
 R <- 1000
 mu0.iterate <- 0.01
 starting.point <- mean(zf$further)
@@ -472,34 +382,3 @@ repeat{
 }
 # diff
 c(mu.lower, mu.upper)
-  @
-Therefore the further confidence interval is $[-0.2627244, -0.1427244]$, the closer confidence interval is $[0.1162231, 0.1962231]$, and the difference confidence interval is $[0.2689475, 0.4489475]$.
-\end{enumerate}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Optional Question
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\item \textbf{Optional Challenge:} In this lab, you performed resampling to 
-approximate the sampling distribution of the $T$ statistic using
-\[T = \frac{\bar{x}_r - 0}{s/\sqrt{n}}.\]
-I'm curious whether it is better/worse/similar if we computed the statistics
-using the sample standard deviation of the resamples ($s_r$), instead of the 
-original sample ($s$)
-  \[T = \frac{\bar{x}_r - 0}{s_r/\sqrt{n}}.\]
-\begin{enumerate}
-  \item Perform a simulation study to evaluate the Type I error for conducting this
-hypothesis test both ways.
-  \item Using the same test case(s) as part (a), compute bootstrap confidence 
-  intervals and assess their coverage -- how often do we `capture' the parameter
-of interest?
-\end{enumerate}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% End Document
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\end{enumerate}
-\bibliography{bibliography}
-\end{document}
-
